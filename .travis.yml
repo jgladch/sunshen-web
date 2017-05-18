@@ -1,0 +1,17 @@
+sudo: false
+
+language: node_js
+
+node_js:
+  - "7.4.0"
+
+cache:
+  directories:
+    - node_modules
+    - client/node_modules
+
+env:
+  - NODE_ENV="travis" COOKIE_SECRET="travis"
+  
+script:
+  - cd client && npm i && npm test

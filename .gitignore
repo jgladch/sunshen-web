@@ -1,0 +1,9 @@
+# Node Stuff
+node_modules
+npm-debug.log
+
+# Client Build (Done on server in production)
+client/build
+
+# Env Variables
+.env
