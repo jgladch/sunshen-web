@@ -1,6 +1,7 @@
 # Node Stuff
 node_modules
 npm-debug.log
+.DS_Store
 
 # Client Build (Done on server in production)
 client/build
