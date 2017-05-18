@@ -14,12 +14,10 @@ describe('App', () => {
   });
 
   it('initializes `selectedFoods` to a blank array', () => {
-    expect(
-      wrapper.state().selectedFoods,
-    ).toEqual([]);
+    expect(wrapper.state().events).toEqual([]);
   });
 
-  describe('when `FoodSearch` invokes `onFoodClick` twice', () => {
+  xdescribe('when `FoodSearch` invokes `onFoodClick` twice', () => {
     const food1 = {
       description: 'Sample food 1',
       kcal: '100.0',
