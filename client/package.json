@@ -1,23 +1,23 @@
 {
-  "name": "lookup-client",
+  "name": "client",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3001/",
   "dependencies": {
     "axios": "0.16.1",
-    "babel-plugin-transform-class-properties": "6.22.0",
-    "enzyme": "2.4.1",
-    "react": "15.4.0",
-    "react-addons-test-utils": "15.4.0",
-    "react-dom": "15.4.0",
-    "react-google-login": "2.8.9",
-    "react-scripts": "0.8.5",
-    "semantic-ui": "2.2.7"
+    "enzyme": "2.8.2",
+    "react": "^15.5.4",
+    "react-addons-test-utils": "15.5.1",
+    "react-dom": "^15.5.4",
+    "react-google-login": "2.8.9"
+  },
+  "devDependencies": {
+    "react-scripts": "1.0.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
-  }
+  },
+  "proxy": "http://localhost:3001/"
 }
