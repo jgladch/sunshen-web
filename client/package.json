@@ -5,6 +5,7 @@
   "dependencies": {
     "axios": "0.16.1",
     "enzyme": "2.8.2",
+    "moment": "2.18.1",
     "react": "^15.5.4",
     "react-addons-test-utils": "15.5.1",
     "react-dom": "^15.5.4",
