@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const responseGoogle = (response) => {
   console.log(response);
+  console.log(process.env.REACT_APP_GOOGLE_CLIENT_ID);
   axios.post('/auth', response).then(response => console.log('response: ', response)).catch(err => console.log(err));
 }
 
@@ -19,7 +20,7 @@ class App extends Component {
     return (
       <div className='App'>
         <GoogleLogin
-          clientId='19384924645-o5equrcis2e7oo46scvlgpn7fe8e6t4g.apps.googleusercontent.com'
+          clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
           buttonText='Login'
           responseType={'id_token token'}
           offline={true}
