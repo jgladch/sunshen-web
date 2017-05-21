@@ -1,6 +1,17 @@
 import React, { Component } from 'react';
 import GoogleLogin from 'react-google-login';
 import axios from 'axios';
+import moment from 'moment';
+
+const Event = (props) => {
+  const format = (time) => {
+    return moment(time).format('MMMM Do, h:mm:ss a');
+  };
+  
+  return (
+    <li>{`${format(props.start)}: ${props.summary}`}</li>
+  );
+};
 
 class App extends Component {
   constructor() {
@@ -9,6 +20,15 @@ class App extends Component {
     this.state = {
       events: []
     };
+  }
+
+  renderEvents() {
+    return this.state.events.map((event) => {
+      const start = event.start.dateTime || event.start.date;
+      return (
+        <Event key={event.id} start={start} summary={event.summary} />
+      );
+    })
   }
 
   responseGoogle(response) {
@@ -30,6 +50,7 @@ class App extends Component {
           onSuccess={(response) => this.responseGoogle(response)}
           onFailure={(response) => this.responseGoogle(response)}
         />
+        <ul>{ this.renderEvents() }</ul>
       </div>
     );
   }
