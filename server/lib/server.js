@@ -2,21 +2,38 @@ import express from 'express';
 import google from 'googleapis';
 import googleAuth from 'google-auth-library';
 import bodyParser from 'body-parser';
+import session from 'cookie-session';
+import compression from 'compression';
+import enforce from 'express-sslify';
 
 const app = express();
+const env = process.env.NODE_ENV || 'development';
 const calendar = google.calendar('v3');
 
 // Environment variables in development
-if (process.env.NODE_ENV !== 'production') { // If we're not in production, pull in environment variables
+if (env !== 'production') {
   require('dotenv').config();
 }
 
 // Middleware
 app.set('port', (process.env.PORT || 3001));
 app.use(bodyParser.json());
+app.use(compression());
 
-if (process.env.NODE_ENV === 'production') { // Express only serves static assets in production
+app.use(session({
+  secret: process.env.COOKIE_SECRET,
+  secure: env === 'production',
+  httpOnly: true
+}));
+
+if (env === 'production') { // Express only serves static assets in production
   app.use(express.static('client/build'));
+  app.disable('x-powered-by');
+  app.enable('trust proxy');
+  app.set('trust proxy', 1);
+  app.use(enforce.HTTPS({
+    trustProtoHeader: true
+  }));
 }
 
 // Routes
@@ -37,6 +54,7 @@ app.post('/auth', (req, res) => {
     }
     
     oauth2Client.credentials = token;
+    req.session.auth = token;
 
     calendar.events.list({
       auth: oauth2Client,
@@ -53,20 +71,10 @@ app.post('/auth', (req, res) => {
 
       const events = response.items;
 
-      console.log('events');
-
-      if (events.length == 0) {
-        console.log('No upcoming events found.');
-      } else {
-        console.log('Upcoming 10 events:');
-        for (var i = 0; i < events.length; i++) {
-          var event = events[i];
-          var start = event.start.dateTime || event.start.date;
-          console.log('%s - %s', start, event.summary);
-        }
-      }
-
-      return res.json(events);
+      return res.json({
+        auth: token,
+        events
+      });
     });
   });
 });

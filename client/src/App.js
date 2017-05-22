@@ -13,13 +13,44 @@ const Event = (props) => {
   );
 };
 
+class Auth extends Component {
+  render() {
+    const authorized = this.props.authorized;
+    if (!authorized) {
+      return (
+        <GoogleLogin
+          clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+          buttonText='Login'
+          responseType={'id_token token'}
+          offline={true}
+          scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar'}
+          onSuccess={(response) => this.props.responseGoogle(response)}
+          onFailure={(response) => this.props.responseGoogle(response)}
+        />
+      );
+    } else {
+      return null;
+    }
+  }
+}
+
 class App extends Component {
   constructor() {
     super();
 
     this.state = {
-      events: []
+      events: [],
+      auth: !!localStorage.sunShenAuth ? JSON.parse(localStorage.sunShenAuth) : false
     };
+  }
+
+  responseGoogle(response) {
+    return axios.post('/auth', response).then((response) => {
+      const events = response.data.events;
+      const auth = response.data.auth;
+      localStorage.sunShenAuth = JSON.stringify(auth);
+      return this.setState({ events, auth });
+    }).catch(err => console.log(err));
   }
 
   renderEvents() {
@@ -31,25 +62,11 @@ class App extends Component {
     })
   }
 
-  responseGoogle(response) {
-    return axios.post('/auth', response).then((response) => {
-      const events = response.data;
-      return this.setState({ events });
-    }).catch(err => console.log(err));
-  }
-
   render() {
+    const authorized = !!this.state.auth;
     return (
       <div className='App'>
-        <GoogleLogin
-          clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
-          buttonText='Login'
-          responseType={'id_token token'}
-          offline={true}
-          scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar'}
-          onSuccess={(response) => this.responseGoogle(response)}
-          onFailure={(response) => this.responseGoogle(response)}
-        />
+        <Auth authorized={authorized} responseGoogle={(response) =>  this.responseGoogle(response)} />
         <ul>{ this.renderEvents() }</ul>
       </div>
     );
