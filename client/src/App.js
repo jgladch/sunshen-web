@@ -40,7 +40,7 @@ class App extends Component {
 
     this.state = {
       events: [],
-      auth: !!localStorage.sunShenAuth ? JSON.parse(localStorage.sunShenAuth) : false
+      auth: !!localStorage && !!localStorage.sunShenAuth ? JSON.parse(localStorage.sunShenAuth) : false
     };
 
     if (this.state.auth) {
@@ -55,7 +55,11 @@ class App extends Component {
     return axios.post('/auth', response).then((response) => {
       const events = response.data.events;
       const auth = response.data.auth;
-      localStorage.sunShenAuth = JSON.stringify(auth);
+
+      if (!!localStorage) {
+        localStorage.sunShenAuth = JSON.stringify(auth);
+      }
+
       this.setState({ events, auth });
     }).catch(err => console.log(err));
   }

@@ -64,6 +64,7 @@ app.post('/auth', (req, res) => {
       singleEvents: true,
       orderBy: 'startTime'
     }, (err, response) => {
+      console.log('response: ', response);
       if (err) {
         console.log('The API returned an error: ' + err);
         return;
