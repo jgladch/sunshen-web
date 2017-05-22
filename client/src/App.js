@@ -3,6 +3,8 @@ import GoogleLogin from 'react-google-login';
 import axios from 'axios';
 import moment from 'moment';
 
+const localStorage = (!!window && !!window.localStorage) ? window.localStorage : false;
+
 const Event = (props) => {
   const format = (time) => {
     return moment(time).format('MMMM Do, h:mm:ss a');
