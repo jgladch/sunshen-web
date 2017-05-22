@@ -8,6 +8,7 @@ import enforce from 'express-sslify';
 
 const app = express();
 const env = process.env.NODE_ENV || 'development';
+const auth = new googleAuth();
 const calendar = google.calendar('v3');
 
 // Environment variables in development
@@ -42,7 +43,6 @@ app.get('/data', (req, res) => {
 });
 
 app.post('/auth', (req, res) => {
-  const auth = new googleAuth();
   const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
 
   return oauth2Client.getToken(req.body.code, (err, token) => {
@@ -56,7 +56,7 @@ app.post('/auth', (req, res) => {
     oauth2Client.credentials = token;
     req.session.auth = token;
 
-    calendar.events.list({
+    return calendar.events.list({
       auth: oauth2Client,
       calendarId: 'primary',
       timeMin: (new Date()).toISOString(),
@@ -77,6 +77,32 @@ app.post('/auth', (req, res) => {
       });
     });
   });
+});
+
+app.get('/events', (req, res) => {
+  if (req.session.auth) {
+    const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
+    oauth2Client.credentials = req.session.auth;
+    return calendar.events.list({
+      auth: oauth2Client,
+      calendarId: 'primary',
+      timeMin: (new Date()).toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime'
+    }, (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return;
+      }
+
+      const events = response.items;
+
+      return res.json({ events });
+    });
+  } else {
+    return res.status(402).end();
+  }
 });
 
 app.listen(app.get('port'), () => {

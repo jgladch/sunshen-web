@@ -42,6 +42,13 @@ class App extends Component {
       events: [],
       auth: !!localStorage.sunShenAuth ? JSON.parse(localStorage.sunShenAuth) : false
     };
+
+    if (this.state.auth) {
+      axios.get('/events').then((response) => {
+        const events = response.data.events;
+        this.setState({ events });
+      }).catch(err => console.log(err));
+    }
   }
 
   responseGoogle(response) {
@@ -49,7 +56,7 @@ class App extends Component {
       const events = response.data.events;
       const auth = response.data.auth;
       localStorage.sunShenAuth = JSON.stringify(auth);
-      return this.setState({ events, auth });
+      this.setState({ events, auth });
     }).catch(err => console.log(err));
   }
 
