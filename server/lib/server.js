@@ -81,7 +81,8 @@ app.post('/auth', (req, res) => {
 });
 
 app.get('/events', (req, res) => {
-  if (req.session.auth) {
+  const reqAuth = req.session.auth;
+  if (reqAuth) {
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
     oauth2Client.credentials = req.session.auth;
     return calendar.events.list({
@@ -99,7 +100,7 @@ app.get('/events', (req, res) => {
 
       const events = response.items;
 
-      return res.json({ events });
+      return res.json({ events, auth });
     });
   } else {
     return res.status(402).end();

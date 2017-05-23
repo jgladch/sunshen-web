@@ -3,8 +3,6 @@ import GoogleLogin from 'react-google-login';
 import axios from 'axios';
 import moment from 'moment';
 
-const localStorage = (!!window && !!window.localStorage) ? window.localStorage : false;
-
 const Event = (props) => {
   const format = (time) => {
     return moment(time).format('MMMM Do, h:mm:ss a');
@@ -26,6 +24,7 @@ class Auth extends Component {
           responseType={'id_token token'}
           offline={true}
           scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar'}
+          prompt={'consent'}
           onSuccess={(response) => this.props.responseGoogle(response)}
           onFailure={(response) => this.props.responseGoogle(response)}
         />
@@ -42,15 +41,14 @@ class App extends Component {
 
     this.state = {
       events: [],
-      auth: !!localStorage && !!localStorage.sunShenAuth ? JSON.parse(localStorage.sunShenAuth) : false
+      auth: false
     };
 
-    if (this.state.auth) {
-      axios.get('/events').then((response) => {
-        const events = response.data.events;
-        this.setState({ events });
-      }).catch(err => console.log(err));
-    }
+    axios.get('/events').then((response) => {
+      console.log('response: ', response);
+      const events = response.data.events;
+      this.setState({ events });
+    }).catch(err => console.log(err));
   }
 
   responseGoogle(response) {
@@ -58,21 +56,21 @@ class App extends Component {
       const events = response.data.events;
       const auth = response.data.auth;
 
-      if (!!localStorage) {
-        localStorage.sunShenAuth = JSON.stringify(auth);
-      }
-
       this.setState({ events, auth });
     }).catch(err => console.log(err));
   }
 
-  renderEvents() {
-    return this.state.events.map((event) => {
-      const start = event.start.dateTime || event.start.date;
-      return (
-        <Event key={event.id} start={start} summary={event.summary} />
-      );
-    })
+  renderEvents(authorized) {
+    if (authorized) {
+      return this.state.events.map((event) => {
+        const start = event.start.dateTime || event.start.date;
+        return (
+          <Event key={event.id} start={start} summary={event.summary} />
+        );
+      });
+    } else {
+      return null;
+    }
   }
 
   render() {
@@ -80,7 +78,7 @@ class App extends Component {
     return (
       <div className='App'>
         <Auth authorized={authorized} responseGoogle={(response) =>  this.responseGoogle(response)} />
-        <ul>{ this.renderEvents() }</ul>
+        <ul>{ this.renderEvents(authorized) }</ul>
       </div>
     );
   }
