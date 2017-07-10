@@ -2,14 +2,13 @@ import React, { Component } from 'react';
 import GoogleLogin from 'react-google-login';
 import axios from 'axios';
 import moment from 'moment';
+import _ from 'lodash';
+import 'bootstrap/dist/css/bootstrap.css';
+import { Accordion, Panel, ListGroup, ListGroupItem } from 'react-bootstrap';
 
-const Event = (props) => {
-  const format = (time) => {
-    return moment(time).format('MMMM Do, h:mm:ss a');
-  };
-  
+const EventListGroupItem = (props) => {
   return (
-    <li>{`${format(props.start)}: ${props.summary}`}</li>
+    <ListGroupItem key={props.id}>{props.summary}</ListGroupItem>
   );
 };
 
@@ -41,13 +40,14 @@ class App extends Component {
 
     this.state = {
       events: [],
+      sortedEvents: [],
       auth: false
     };
 
     axios.get('/events').then((response) => {
       console.log('response: ', response);
       const events = response.data.events;
-      this.setState({ events });
+      return this.setState({ events });
     }).catch(err => console.log(err));
   }
 
@@ -55,19 +55,43 @@ class App extends Component {
     return axios.post('/auth', response).then((response) => {
       const events = response.data.events;
       const auth = response.data.auth;
+      // Group events by day, map into array, sort array by date (for displaying events in day lists)
+      const groupedEvents = _.groupBy(events, event => moment(event.start.dateTime || event.start.date).format('MMMM Do, YYYY'));
+      const mappedEvents = _.map(groupedEvents, (events, date) => {
+        return {
+          date,
+          events
+        };
+      });
+      const sortedEvents = _.sortBy(mappedEvents, group => group.date);
 
-      this.setState({ events, auth });
+      return this.setState({ events, sortedEvents, auth });
     }).catch(err => console.log(err));
   }
 
   renderEvents(authorized) {
     if (authorized) {
-      return this.state.events.map((event) => {
-        const start = event.start.dateTime || event.start.date;
-        return (
-          <Event key={event.id} start={start} summary={event.summary} />
-        );
-      });
+      return (
+        <Accordion>
+          {
+            this.state.sortedEvents.map((group, index) => {
+              return (
+                <Panel key={index} header={group.date} eventKey={index}>
+                  <ListGroup key={index} fill>
+                    {
+                      group.events.map((event, index) => {
+                        return (
+                           <EventListGroupItem key={index} id={event.id} summary={event.summary}></EventListGroupItem>
+                        );
+                      })
+                    }
+                  </ListGroup>
+                </Panel>
+              );
+            })
+          }
+        </Accordion>
+      );
     } else {
       return null;
     }
@@ -78,7 +102,7 @@ class App extends Component {
     return (
       <div className='App'>
         <Auth authorized={authorized} responseGoogle={(response) =>  this.responseGoogle(response)} />
-        <ul>{ this.renderEvents(authorized) }</ul>
+        <div>{ this.renderEvents(authorized) }</div>
       </div>
     );
   }
