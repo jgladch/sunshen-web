@@ -4,6 +4,8 @@ import axios from 'axios';
 import moment from 'moment';
 import _ from 'lodash';
 import 'bootstrap/dist/css/bootstrap.css';
+import './App.css';
+import logo from './logo.png';
 import { Accordion, Panel, ListGroup, ListGroupItem } from 'react-bootstrap';
 
 const EventListGroupItem = (props) => {
@@ -17,16 +19,20 @@ class Auth extends Component {
     const authorized = this.props.authorized;
     if (!authorized) {
       return (
-        <GoogleLogin
-          clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
-          buttonText='Login'
-          responseType={'id_token token'}
-          offline={true}
-          scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly'}
-          prompt={'consent'}
-          onSuccess={(response) => this.props.responseGoogle(response)}
-          onFailure={(response) => this.props.responseGoogle(response)}
-        />
+        <div className="login-content">
+          <img src={logo} alt="Sun Shen" className="img img-responsive"/>
+          <GoogleLogin
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText='Login with Google'
+            className='btn btn-block btn-danger login-button'
+            responseType={'id_token token'}
+            offline={true}
+            scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly'}
+            prompt={'consent'}
+            onSuccess={(response) => this.props.responseGoogle(response)}
+            onFailure={(response) => this.props.responseGoogle(response)}
+          />
+        </div>
       );
     } else {
       return null;
