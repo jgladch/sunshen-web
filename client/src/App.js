@@ -22,7 +22,7 @@ class Auth extends Component {
           buttonText='Login'
           responseType={'id_token token'}
           offline={true}
-          scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar'}
+          scope={'https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly'}
           prompt={'consent'}
           onSuccess={(response) => this.props.responseGoogle(response)}
           onFailure={(response) => this.props.responseGoogle(response)}
@@ -43,12 +43,6 @@ class App extends Component {
       sortedEvents: [],
       auth: false
     };
-
-    axios.get('/events').then((response) => {
-      console.log('response: ', response);
-      const events = response.data.events;
-      return this.setState({ events });
-    }).catch(err => console.log(err));
   }
 
   responseGoogle(response) {
