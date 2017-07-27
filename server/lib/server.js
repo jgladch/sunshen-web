@@ -35,6 +35,7 @@ if (env === 'production') { // Express only serves static assets in production
   app.use(enforce.HTTPS({
     trustProtoHeader: true
   }));
+  console.log('Production app should be forcing HTTPS redirect');
 }
 
 // Routes
