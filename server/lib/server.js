@@ -35,7 +35,6 @@ if (env === 'production') { // Express only serves static assets in production
   app.use(enforce.HTTPS({
     trustProtoHeader: true
   }));
-  console.log('Production app should be forcing HTTPS redirect');
 }
 
 // Routes
@@ -63,7 +62,9 @@ app.post('/auth', (req, res) => {
       timeMin: (new Date()).toISOString(),
       maxResults: 10,
       singleEvents: true,
-      orderBy: 'startTime'
+      orderBy: 'startTime',
+      kind: 'calendar#event',
+      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
     }, (err, response) => {
       console.log('response: ', response);
       if (err) {

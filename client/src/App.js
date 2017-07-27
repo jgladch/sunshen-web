@@ -6,13 +6,71 @@ import _ from 'lodash';
 import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
 import logo from './logo.png';
-import { Accordion, Panel, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { 
+  Accordion,
+  Button,
+  Col,
+  Row,
+  Form,
+  FormControl,
+  FormGroup,
+  Panel,
+  ListGroup,
+  ListGroupItem,
+} from 'react-bootstrap';
 
-const EventListGroupItem = (props) => {
-  return (
-    <ListGroupItem key={props.id}>{props.summary}</ListGroupItem>
-  );
-};
+class EventListGroupItem extends Component {
+  constructor() {
+    super();
+    this.state = {};
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+
+    console.log('submitting!');
+    console.log('state: ', this.state);
+  }
+
+  updatedInputValue(e, type) {
+    let obj = {};
+    obj[type] = e.target.value;
+    this.setState(obj);
+  }
+
+  render() {
+    return (
+      <ListGroupItem key={this.props.id}>
+        <Row>
+          <Col sm={4}>{this.props.start}: {this.props.summary}</Col>
+          <Form horizontal onSubmit={(e) => this.handleSubmit(e)}>
+            <Col sm={3}>
+              <FormControl
+                ref="why"
+                onChange={(e) => this.updatedInputValue(e, 'why')}
+                type="text"
+                label="Why?"
+                placeholder="Why?"
+              />
+            </Col>
+            <Col sm={3}>
+              <FormControl
+                ref="result"
+                type="text"
+                label="Result?"
+                onChange={(e) => this.updatedInputValue(e, 'result')}
+                placeholder="Result?"
+              />
+            </Col>
+            <Col sm={2}>
+              <Button block type="submit" bsStyle="default">Save</Button>
+            </Col>
+          </Form>
+        </Row>
+      </ListGroupItem>
+    );
+  }
+}
 
 class Auth extends Component {
   render() {
@@ -80,8 +138,9 @@ class App extends Component {
                   <ListGroup key={index} fill>
                     {
                       group.events.map((event, index) => {
+                        const start = moment(event.start.dateTime || event.start.date).format('h:mm A');
                         return (
-                           <EventListGroupItem key={index} id={event.id} summary={event.summary}></EventListGroupItem>
+                           <EventListGroupItem start={start} key={index} id={event.id} summary={event.summary} privateProps={event.extendedProperties}></EventListGroupItem>
                         );
                       })
                     }
