@@ -13,16 +13,19 @@ import {
   Row,
   Form,
   FormControl,
-  FormGroup,
   Panel,
   ListGroup,
   ListGroupItem,
 } from 'react-bootstrap';
 
 class EventListGroupItem extends Component {
-  constructor() {
-    super();
-    this.state = {};
+  constructor(props) {
+    super(props);
+    this.state = {
+      id: this.props.id,
+      end: this.props.endTime,
+      start: this.props.startTime
+    };
   }
 
   handleSubmit(e) {
@@ -30,6 +33,11 @@ class EventListGroupItem extends Component {
 
     console.log('submitting!');
     console.log('state: ', this.state);
+
+    return axios.put('/event', this.state).then((response) => {
+      console.log('/event response: ', response);
+      // return this.setState({ events, sortedEvents, auth });
+    }).catch(err => console.log(err));
   }
 
   updatedInputValue(e, type) {
@@ -140,7 +148,15 @@ class App extends Component {
                       group.events.map((event, index) => {
                         const start = moment(event.start.dateTime || event.start.date).format('h:mm A');
                         return (
-                           <EventListGroupItem start={start} key={index} id={event.id} summary={event.summary} privateProps={event.extendedProperties}></EventListGroupItem>
+                           <EventListGroupItem 
+                             start={start} 
+                             key={index} 
+                             id={event.id} 
+                             summary={event.summary} 
+                             privateProps={event.extendedProperties} 
+                             startTime={event.start} 
+                             endTime={event.end}>
+                           </EventListGroupItem>
                         );
                       })
                     }

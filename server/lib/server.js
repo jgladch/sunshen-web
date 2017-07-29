@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import session from 'cookie-session';
 import compression from 'compression';
 import enforce from 'express-sslify';
+import _ from 'lodash';
 
 const app = express();
 const env = process.env.NODE_ENV || 'development';
@@ -82,30 +83,50 @@ app.post('/auth', (req, res) => {
   });
 });
 
-app.get('/events', (req, res) => {
-  const reqAuth = req.session.auth;
-  if (reqAuth) {
+app.put('/event', (req, res) => {
+  if (!req.session.auth) {
+    return res.status(401).end();
+  } else {
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
+    const props = _.pick(req.body, ['why', 'result']);
+    const eventId = req.body.id;
+    const start = req.body.start;
+    const end = req.body.end;
     oauth2Client.credentials = req.session.auth;
-    return calendar.events.list({
+
+    const params = {
       auth: oauth2Client,
       calendarId: 'primary',
-      timeMin: (new Date()).toISOString(),
-      maxResults: 10,
-      singleEvents: true,
-      orderBy: 'startTime'
-    }, (err, response) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return;
+      eventId,
+      resource: {
+        end,
+        start,
+        extendedProperties: {
+          private: props
+        }
       }
+    };
 
-      const events = response.items;
+    console.log('params: ', params);
 
-      return res.json({ events, auth });
+    return calendar.events.update({
+      auth: oauth2Client,
+      calendarId: 'primary',
+      eventId,
+      resource: {
+        end,
+        start,
+        extendedProperties: {
+          private: props
+        }
+      }
+    }, (err, response) => {
+      console.log('update response: ', err, response);
+      return res.status(200).end();
     });
-  } else {
-    return res.status(402).end();
+
+    console.log('/event req body: ', req.body);
+    return res.json({status: 200});
   }
 });
 
