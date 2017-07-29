@@ -39,10 +39,6 @@ if (env === 'production') { // Express only serves static assets in production
 }
 
 // Routes
-app.get('/data', (req, res) => {
-  return res.send(['1', '2', '3']);
-});
-
 app.post('/auth', (req, res) => {
   const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
 
@@ -88,45 +84,29 @@ app.put('/event', (req, res) => {
     return res.status(401).end();
   } else {
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
-    const props = _.pick(req.body, ['why', 'result']);
+    const extendedProperties = req.body.extendedProperties;
     const eventId = req.body.id;
     const start = req.body.start;
     const end = req.body.end;
     oauth2Client.credentials = req.session.auth;
 
-    const params = {
+    return calendar.events.patch({
       auth: oauth2Client,
       calendarId: 'primary',
       eventId,
       resource: {
         end,
         start,
-        extendedProperties: {
-          private: props
-        }
-      }
-    };
-
-    console.log('params: ', params);
-
-    return calendar.events.update({
-      auth: oauth2Client,
-      calendarId: 'primary',
-      eventId,
-      resource: {
-        end,
-        start,
-        extendedProperties: {
-          private: props
-        }
+        extendedProperties
       }
     }, (err, response) => {
-      console.log('update response: ', err, response);
-      return res.status(200).end();
+      if (err) {
+        console.log('err: ', err);
+        return res.status(500).end();
+      } else {
+        return res.status(200).end();
+      }
     });
-
-    console.log('/event req body: ', req.body);
-    return res.json({status: 200});
   }
 });
 

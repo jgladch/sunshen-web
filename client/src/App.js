@@ -21,29 +21,41 @@ import {
 class EventListGroupItem extends Component {
   constructor(props) {
     super(props);
+    
+    const extendedProperties = _.defaults(this.props.extendedProperties, {
+      private: {
+        why: '',
+        result: ''
+      }
+    });
+
     this.state = {
       id: this.props.id,
       end: this.props.endTime,
-      start: this.props.startTime
+      start: this.props.startTime,
+      extendedProperties,
+      buttonClass: 'btn btn-default btn-block'
     };
   }
 
   handleSubmit(e) {
     e.preventDefault();
 
-    console.log('submitting!');
-    console.log('state: ', this.state);
-
     return axios.put('/event', this.state).then((response) => {
-      console.log('/event response: ', response);
-      // return this.setState({ events, sortedEvents, auth });
-    }).catch(err => console.log(err));
+      return this.setState({buttonClass: 'btn btn-success btn-block'});
+    }).catch((err) => {
+      console.log(err);
+      return this.setState({buttonClass: 'btn btn-danger btn-block'});
+    });
   }
 
   updatedInputValue(e, type) {
-    let obj = {};
-    obj[type] = e.target.value;
-    this.setState(obj);
+    let update = _.clone(this.state.extendedProperties);
+    update.private[type] = e.target.value;
+    
+    return this.setState({
+      extendedProperties: update
+    });
   }
 
   render() {
@@ -58,20 +70,22 @@ class EventListGroupItem extends Component {
                 onChange={(e) => this.updatedInputValue(e, 'why')}
                 type="text"
                 label="Why?"
+                value={this.state.extendedProperties.private.why}
                 placeholder="Why?"
               />
             </Col>
             <Col sm={3}>
               <FormControl
                 ref="result"
+                onChange={(e) => this.updatedInputValue(e, 'result')}
                 type="text"
                 label="Result?"
-                onChange={(e) => this.updatedInputValue(e, 'result')}
+                value={this.state.extendedProperties.private.result}
                 placeholder="Result?"
               />
             </Col>
             <Col sm={2}>
-              <Button block type="submit" bsStyle="default">Save</Button>
+              <Button className={this.state.buttonClass} block type="submit" bsStyle="default">Save</Button>
             </Col>
           </Form>
         </Row>
@@ -153,7 +167,7 @@ class App extends Component {
                              key={index} 
                              id={event.id} 
                              summary={event.summary} 
-                             privateProps={event.extendedProperties} 
+                             extendedProperties={event.extendedProperties} 
                              startTime={event.start} 
                              endTime={event.end}>
                            </EventListGroupItem>
