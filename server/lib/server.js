@@ -6,6 +6,7 @@ import session from 'cookie-session';
 import compression from 'compression';
 import enforce from 'express-sslify';
 import _ from 'lodash';
+import moment from 'moment';
 
 const app = express();
 const env = process.env.NODE_ENV || 'development';
@@ -39,6 +40,46 @@ if (env === 'production') { // Express only serves static assets in production
 }
 
 // Routes
+app.get('/init', (req, res) => {
+  if (req.session.auth) {
+    const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
+    oauth2Client.credentials = req.session.auth;
+
+    return calendar.events.list({
+      auth: oauth2Client,
+      calendarId: 'primary',
+      timeMin: (new Date()).toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime',
+      kind: 'calendar#event',
+      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    }, (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return res.json({
+          authorized: false
+        });
+      }
+
+      const events = response.items;
+      const sortedEvents = sortEvents(events);
+
+      return res.json({
+        authorized: true,
+        events,
+        sortedEvents
+      });
+    });
+  } else {
+    return res.json({
+      authorized: false,
+      events: [],
+      sortedEvents: []
+    });
+  }
+});
+
 app.post('/auth', (req, res) => {
   const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
 
@@ -70,10 +111,12 @@ app.post('/auth', (req, res) => {
       }
 
       const events = response.items;
+      const sortedEvents = sortEvents(events);
 
       return res.json({
-        auth: token,
-        events
+        authorized: true,
+        events,
+        sortedEvents
       });
     });
   });
@@ -113,3 +156,16 @@ app.put('/event', (req, res) => {
 app.listen(app.get('port'), () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });
+
+function sortEvents (events) { // Group events by day, map into array, sort array by date (for displaying events in day lists)
+  const groupedEvents = _.groupBy(events, event => moment(event.start.dateTime || event.start.date).format('MMMM Do, YYYY'));
+  const mappedEvents = _.map(groupedEvents, (events, date) => {
+    return {
+      date,
+      events
+    };
+  });
+  const sortedEvents = _.sortBy(mappedEvents, group => group.date);
+
+  return sortedEvents;
+}

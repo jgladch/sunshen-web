@@ -96,8 +96,13 @@ class EventListGroupItem extends Component {
 
 class Auth extends Component {
   render() {
-    const authorized = this.props.authorized;
-    if (!authorized) {
+    if (this.props.initializing) {
+      return (
+        <div className="login-content">
+          <img src={logo} alt="Sun Shen" className="img img-responsive"/>
+        </div>
+      );
+    } else {
       return (
         <div className="login-content">
           <img src={logo} alt="Sun Shen" className="img img-responsive"/>
@@ -114,8 +119,6 @@ class Auth extends Component {
           />
         </div>
       );
-    } else {
-      return null;
     }
   }
 }
@@ -127,73 +130,69 @@ class App extends Component {
     this.state = {
       events: [],
       sortedEvents: [],
-      auth: false
+      auth: false,
+      initializing: true
     };
-  }
 
-  responseGoogle(response) {
-    return axios.post('/auth', response).then((response) => {
-      const events = response.data.events;
-      const auth = response.data.auth;
-      // Group events by day, map into array, sort array by date (for displaying events in day lists)
-      const groupedEvents = _.groupBy(events, event => moment(event.start.dateTime || event.start.date).format('MMMM Do, YYYY'));
-      const mappedEvents = _.map(groupedEvents, (events, date) => {
-        return {
-          date,
-          events
-        };
-      });
-      const sortedEvents = _.sortBy(mappedEvents, group => group.date);
-
-      return this.setState({ events, sortedEvents, auth });
+    axios.get('/init').then((response) => {
+      const state = _.extend(response.data, {initializing: false});
+      return this.setState(state);
     }).catch(err => console.log(err));
   }
 
-  renderEvents(authorized) {
-    if (authorized) {
-      return (
-        <Accordion>
-          {
-            this.state.sortedEvents.map((group, index) => {
-              return (
-                <Panel key={index} header={group.date} eventKey={index}>
-                  <ListGroup key={index} fill>
-                    {
-                      group.events.map((event, index) => {
-                        const start = moment(event.start.dateTime || event.start.date).format('h:mm A');
-                        return (
-                           <EventListGroupItem 
-                             start={start} 
-                             key={index} 
-                             id={event.id} 
-                             summary={event.summary} 
-                             extendedProperties={event.extendedProperties} 
-                             startTime={event.start} 
-                             endTime={event.end}>
-                           </EventListGroupItem>
-                        );
-                      })
-                    }
-                  </ListGroup>
-                </Panel>
-              );
-            })
-          }
-        </Accordion>
-      );
-    } else {
-      return null;
-    }
+  responseGoogle(response) {
+    return axios.post('/auth', response).then((response) => {      
+      return this.setState(response.data);
+    }).catch(err => console.log(err));
+  }
+
+  renderEvents() {
+    return (
+      <Accordion>
+        {
+          this.state.sortedEvents.map((group, index) => {
+            return (
+              <Panel key={index} header={group.date} eventKey={index}>
+                <ListGroup key={index} fill>
+                  {
+                    group.events.map((event, index) => {
+                      const start = moment(event.start.dateTime || event.start.date).format('h:mm A');
+                      return (
+                         <EventListGroupItem 
+                           start={start} 
+                           key={index} 
+                           id={event.id} 
+                           summary={event.summary} 
+                           extendedProperties={event.extendedProperties} 
+                           startTime={event.start} 
+                           endTime={event.end}>
+                         </EventListGroupItem>
+                      );
+                    })
+                  }
+                </ListGroup>
+              </Panel>
+            );
+          })
+        }
+      </Accordion>
+    );
   }
 
   render() {
-    const authorized = !!this.state.auth;
-    return (
-      <div className='App'>
-        <Auth authorized={authorized} responseGoogle={(response) =>  this.responseGoogle(response)} />
-        <div>{ this.renderEvents(authorized) }</div>
-      </div>
-    );
+    if (this.state.authorized) {
+      return (
+        <div className='App'>
+          <div>{this.renderEvents()}</div>
+        </div>
+      );
+    } else {
+      return (
+        <div className='App'>
+          <Auth initializing={this.state.initializing} responseGoogle={(response) =>  this.responseGoogle(response)} />
+        </div>
+      );
+    }
   }
 }
 
