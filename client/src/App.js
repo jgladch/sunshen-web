@@ -10,8 +10,10 @@ import {
   Accordion,
   Button,
   Col,
+  ControlLabel,
   Row,
   Form,
+  FormGroup,
   FormControl,
   Panel,
   ListGroup,
@@ -25,7 +27,8 @@ class EventListGroupItem extends Component {
     const extendedProperties = _.defaults(this.props.extendedProperties, {
       private: {
         why: '',
-        result: ''
+        result: '',
+        where: ''
       }
     });
 
@@ -58,31 +61,49 @@ class EventListGroupItem extends Component {
     });
   }
 
+  onInputChange(e) {
+    let update = _.clone(this.state.extendedProperties);
+    update.private.result = e.target.value;
+
+    return this.setState({
+      extendedProperties: update
+    })
+  }
+
   render() {
     return (
-      <ListGroupItem key={this.props.id}>
+      <ListGroupItem key={this.props.id} className={`list-group-${this.state.extendedProperties.private.result}`}>
         <Row>
           <Col sm={4}>{this.props.start}: {this.props.summary}</Col>
           <Form horizontal onSubmit={(e) => this.handleSubmit(e)}>
-            <Col sm={3}>
+            <Col sm={2}>
               <FormControl
                 ref="why"
                 onChange={(e) => this.updatedInputValue(e, 'why')}
                 type="text"
-                label="Why?"
+                label="Why are you doing this?"
                 value={this.state.extendedProperties.private.why}
-                placeholder="Why?"
+                placeholder="Why are you doing this?"
               />
             </Col>
-            <Col sm={3}>
+            <Col sm={2}>
               <FormControl
-                ref="result"
-                onChange={(e) => this.updatedInputValue(e, 'result')}
+                ref="where"
+                onChange={(e) => this.updatedInputValue(e, 'where')}
                 type="text"
-                label="Result?"
-                value={this.state.extendedProperties.private.result}
-                placeholder="Result?"
+                label="Where does it lead you long term?"
+                value={this.state.extendedProperties.private.where}
+                placeholder="Where does it lead you long term?"
               />
+            </Col>
+            <Col sm={2}>
+              <FormControl componentClass="select" placeholder="select" value={this.state.extendedProperties.private.result} onChange={(e) => this.onInputChange(e)}>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </FormControl>
             </Col>
             <Col sm={2}>
               <Button className={this.state.buttonClass} block type="submit" bsStyle="default">Save</Button>
@@ -146,6 +167,12 @@ class App extends Component {
     }).catch(err => console.log(err));
   }
 
+  changeEvents(direction) {
+    return axios.get(`/events?direction=${direction}`)
+      .then((response) => this.setState(response.data))
+      .catch(err => console.log(err));
+  }
+
   renderEvents() {
     return (
       <Accordion>
@@ -183,6 +210,10 @@ class App extends Component {
     if (this.state.authorized) {
       return (
         <div className='App'>
+          <div>
+            <Button block bsStyle="default" onClick={() => this.changeEvents('back')}>Back</Button>
+            <Button block bsStyle="default" onClick={() => this.changeEvents('next')}>Next</Button>
+          </div>
           <div>{this.renderEvents()}</div>
         </div>
       );

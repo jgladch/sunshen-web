@@ -122,6 +122,41 @@ app.post('/auth', (req, res) => {
   });
 });
 
+app.get('/events', (req, res) => {
+  if (!req.session.auth) {
+    return res.status(401).end();
+  } else {
+    const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
+    oauth2Client.credentials = req.session.auth;
+    const timeMin = req.query.direction === 'back' ? moment().subtract(1, 'weeks').toISOString() : moment().add(1, 'weeks').toISOString()
+
+    return calendar.events.list({
+      auth: oauth2Client,
+      calendarId: 'primary',
+      timeMin,
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime',
+      kind: 'calendar#event',
+      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    }, (err, response) => {
+      console.log('response: ', response);
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return;
+      }
+
+      const events = response.items;
+      const sortedEvents = sortEvents(events);
+
+      return res.json({
+        events,
+        sortedEvents
+      });
+    });
+  }
+});
+
 app.put('/event', (req, res) => {
   if (!req.session.auth) {
     return res.status(401).end();
@@ -138,8 +173,8 @@ app.put('/event', (req, res) => {
       calendarId: 'primary',
       eventId,
       resource: {
-        end,
-        start,
+        end, // I believe this can be removed after moving to `patch` method
+        start, // This one too
         extendedProperties
       }
     }, (err, response) => {

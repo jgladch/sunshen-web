@@ -44,3 +44,23 @@ html, body, div#root, div.App {
   justify-content: center;
   align-items: center;
 }
+
+.list-group-1 {
+  background-color: #FF0B05;
+}
+
+.list-group-2 {
+  background-color: #C94103;
+}
+
+.list-group-3 {
+  background-color: #937802;
+}
+
+.list-group-4 {
+  background-color: #5DAE01;
+}
+
+.list-group-5 {
+  background-color: #28E500;
+}
