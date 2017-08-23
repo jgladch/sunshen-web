@@ -4,21 +4,23 @@ import axios from 'axios';
 import moment from 'moment';
 import _ from 'lodash';
 import 'bootstrap/dist/css/bootstrap.css';
-import './App.css';
 import logo from './logo.png';
 import { 
   Accordion,
   Button,
+  Checkbox,
   Col,
   ControlLabel,
   Row,
   Form,
   FormGroup,
   FormControl,
+  Modal,
   Panel,
   ListGroup,
   ListGroupItem,
 } from 'react-bootstrap';
+import './App.css';
 
 class EventListGroupItem extends Component {
   constructor(props) {
@@ -187,7 +189,9 @@ class App extends Component {
       events: [],
       sortedEvents: [],
       auth: false,
-      initializing: true
+      initializing: true,
+      calendars: [],
+      showModal: false
     };
 
     this.timeMin = moment();
@@ -195,13 +199,22 @@ class App extends Component {
 
     axios.get('/init').then((response) => {
       const state = _.extend(response.data, {initializing: false});
+      state.calendars = state.calendars.map((cal) => {
+        cal.show = true;
+        return cal;
+      });
       return this.setState(state);
     }).catch(err => console.log(err));
   }
 
   responseGoogle(response) {
-    return axios.post('/auth', response).then((response) => {      
-      return this.setState(response.data);
+    return axios.post('/auth', response).then((response) => {
+      const state = response.data;
+      state.calendars = state.calendars.map((cal) => {
+        cal.show = true;
+        return cal;
+      });
+      return this.setState(state);
     }).catch(err => console.log(err));
   }
 
@@ -217,6 +230,29 @@ class App extends Component {
     return axios.get(`/events?timeMin=${this.timeMin.toISOString()}&timeMax=${this.timeMax.toISOString()}`)
       .then((response) => this.setState(response.data))
       .catch(err => console.log(err));
+  }
+
+  openModal() {
+    return this.setState({showModal: true});
+  }
+
+  closeModal() {
+    return this.setState({showModal: false});
+  }
+
+  updateCheckbox(e, calId) {
+    let calendars = _.clone(this.state.calendars);
+    
+    calendars = calendars.map((cal) => {
+      if (cal.id === calId) {
+        cal.show = e.target.checked;
+      }
+      return cal;
+    });
+
+    return this.setState({
+      calendars
+    });
   }
 
   renderEvents() {
@@ -258,9 +294,28 @@ class App extends Component {
         <div className='App'>
           <div className="controls-row">
             <Button className="controls-back" bsStyle="default" onClick={() => this.changeEvents('back')}>Back</Button>
+            <Button className="controls-next" bsStyle="default" onClick={() => this.openModal()}>Calendars</Button>
             <Button className="controls-next" bsStyle="default" onClick={() => this.changeEvents('next')}>Next</Button>
           </div>
           <div>{this.renderEvents()}</div>
+          <Modal show={this.state.showModal} onHide={() => this.closeModal()}>
+            <Modal.Header closeButton>
+              <Modal.Title>Calendars</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <ListGroup>
+              {
+                this.state.calendars.map((cal, index) => {
+                  return (
+                    <ListGroupItem key={cal.id}>
+                      <Checkbox checked={cal.show} onChange={(e) => this.updateCheckbox(e, cal.id)}></Checkbox> {cal.summary}
+                    </ListGroupItem>
+                  );
+                })
+              }
+              </ListGroup>
+            </Modal.Body>
+          </Modal>
         </div>
       );
     } else {

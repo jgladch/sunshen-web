@@ -116,3 +116,11 @@ html, body, div#root, div.App {
 .controls-next {
   margin-left: auto;
 }
+
+.checkbox {
+  display: inline;
+}
+
+.checkbox label {
+  min-height: 15px;
+}

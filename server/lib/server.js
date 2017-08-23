@@ -45,32 +45,40 @@ app.get('/init', (req, res) => {
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
     oauth2Client.credentials = req.session.auth;
 
-    return calendar.events.list({
-      auth: oauth2Client,
-      calendarId: 'primary',
-      timeMin: (new Date()).toISOString(),
-      maxResults: 10,
-      singleEvents: true,
-      orderBy: 'startTime',
-      kind: 'calendar#event',
-      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    return calendar.calendarList.list({
+      auth: oauth2Client
     }, (err, response) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
+      const calendars = !!response && !!response.items ? response.items : [];
+
+      return calendar.events.list({
+        auth: oauth2Client,
+        calendarId: 'primary',
+        timeMin: (new Date()).toISOString(),
+        maxResults: 10,
+        singleEvents: true,
+        orderBy: 'startTime',
+        kind: 'calendar#event',
+        fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+      }, (err, response) => {
+        if (err) {
+          console.log('The API returned an error: ' + err);
+          return res.json({
+            authorized: false
+          });
+        }
+
+        const events = response.items;
+        const sortedEvents = sortEvents(events);
+
         return res.json({
-          authorized: false
+          authorized: true,
+          events,
+          sortedEvents,
+          calendars
         });
-      }
-
-      const events = response.items;
-      const sortedEvents = sortEvents(events);
-
-      return res.json({
-        authorized: true,
-        events,
-        sortedEvents
       });
     });
+
   } else {
     return res.json({
       authorized: false,
@@ -96,29 +104,37 @@ app.post('/auth', (req, res) => {
     oauth2Client.credentials = token;
     req.session.auth = token;
 
-    return calendar.events.list({
-      auth: oauth2Client,
-      calendarId: 'primary',
-      timeMin,
-      timeMax,
-      singleEvents: true,
-      orderBy: 'startTime',
-      kind: 'calendar#event',
-      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    return calendar.calendarList.list({
+      auth: oauth2Client
     }, (err, response) => {
-      console.log('response: ', response);
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return;
-      }
+      const calendars = !!response && !!response.items ? response.items : [];
 
-      const events = response.items;
-      const sortedEvents = sortEvents(events);
+      return calendar.events.list({
+        auth: oauth2Client,
+        calendarId: 'primary',
+        timeMin: (new Date()).toISOString(),
+        maxResults: 10,
+        singleEvents: true,
+        orderBy: 'startTime',
+        kind: 'calendar#event',
+        fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+      }, (err, response) => {
+        if (err) {
+          console.log('The API returned an error: ' + err);
+          return res.json({
+            authorized: false
+          });
+        }
 
-      return res.json({
-        authorized: true,
-        events,
-        sortedEvents
+        const events = response.items;
+        const sortedEvents = sortEvents(events);
+
+        return res.json({
+          authorized: true,
+          events,
+          sortedEvents,
+          calendars
+        });
       });
     });
   });
