@@ -72,44 +72,62 @@ class EventListGroupItem extends Component {
 
   render() {
     return (
-      <ListGroupItem key={this.props.id} className={`list-group-${this.state.extendedProperties.private.result}`}>
+      <ListGroupItem key={this.props.id}>
         <Row>
-          <Col sm={4}>{this.props.start}: {this.props.summary}</Col>
-          <Form horizontal onSubmit={(e) => this.handleSubmit(e)}>
-            <Col sm={2}>
-              <FormControl
-                ref="why"
-                onChange={(e) => this.updatedInputValue(e, 'why')}
-                type="text"
-                label="Why are you doing this?"
-                value={this.state.extendedProperties.private.why}
-                placeholder="Why are you doing this?"
-              />
-            </Col>
-            <Col sm={2}>
-              <FormControl
-                ref="where"
-                onChange={(e) => this.updatedInputValue(e, 'where')}
-                type="text"
-                label="Where does it lead you long term?"
-                value={this.state.extendedProperties.private.where}
-                placeholder="Where does it lead you long term?"
-              />
-            </Col>
-            <Col sm={2}>
-              <FormControl componentClass="select" placeholder="select" value={this.state.extendedProperties.private.result} onChange={(e) => this.onInputChange(e)}>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-              </FormControl>
-            </Col>
-            <Col sm={2}>
-              <Button className={this.state.buttonClass} block type="submit" bsStyle="default">Save</Button>
-            </Col>
-          </Form>
+          <Col sm={12} className='text-center'>
+            <h4 className='title-inline'>{this.props.start}: {this.props.summary}</h4><span id='result-icon' className={`list-group-${this.state.extendedProperties.private.result}`}></span>
+          </Col>
         </Row>
+        <Panel className="padded-panel">
+          <Form horizontal onSubmit={(e) => this.handleSubmit(e)}>
+            <Row>
+              <Col sm={4}>
+                <FormGroup controlId="why">
+                  <ControlLabel>Why are you doing this?</ControlLabel>
+                  <FormControl
+                    ref="why"
+                    onChange={(e) => this.updatedInputValue(e, 'why')}
+                    type="text"
+                    label="Why are you doing this?"
+                    value={this.state.extendedProperties.private.why}
+                  />
+                </FormGroup>
+              </Col>
+              <Col sm={4}>
+                <FormGroup controlId="why">
+                  <ControlLabel>Where does it lead you long term?</ControlLabel>
+                  <FormControl
+                    ref="where"
+                    onChange={(e) => this.updatedInputValue(e, 'where')}
+                    type="text"
+                    label="Where does it lead you long term?"
+                    value={this.state.extendedProperties.private.where}
+                  />
+                </FormGroup>
+              </Col>
+              <Col sm={4}>
+                <FormGroup controlId="why">
+                  <ControlLabel>How much did you enjoy it?</ControlLabel>
+                  <FormControl componentClass="select" placeholder="select" value={this.state.extendedProperties.private.result} onChange={(e) => this.onInputChange(e)}>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </FormControl>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Button className={this.state.buttonClass} block type="submit" bsStyle="default">Save</Button>
+            </Row>
+          </Form>
+        </Panel>
       </ListGroupItem>
     );
   }

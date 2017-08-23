@@ -46,21 +46,57 @@ html, body, div#root, div.App {
 }
 
 .list-group-1 {
-  background-color: #FF0B05;
+  background-color: #F50000;
 }
 
 .list-group-2 {
-  background-color: #C94103;
+  background-color: #E01900;
 }
 
 .list-group-3 {
-  background-color: #937802;
+  background-color: #CC3200;
 }
 
 .list-group-4 {
-  background-color: #5DAE01;
+  background-color: #B84C00
 }
 
 .list-group-5 {
-  background-color: #28E500;
+  background-color: #A46500;
+}
+
+.list-group-6 {
+  background-color: #8F7F00;
+}
+
+.list-group-7 {
+  background-color: #7B9800;
+}
+
+.list-group-8 {
+  background-color: #67B200;
+}
+
+.list-group-9 {
+  background-color: #53CB00;
+}
+
+.list-group-10 {
+  background-color: #3FE500;
+}
+
+.padded-panel {
+  padding: 15px;
+}
+
+#result-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.title-inline {
+  display: inline;
 }
