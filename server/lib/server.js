@@ -82,6 +82,8 @@ app.get('/init', (req, res) => {
 
 app.post('/auth', (req, res) => {
   const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
+  const timeMin = moment().toISOString();
+  const timeMax = moment().add(1, 'weeks').toISOString();
 
   return oauth2Client.getToken(req.body.code, (err, token) => {
     if (err) {
@@ -97,8 +99,8 @@ app.post('/auth', (req, res) => {
     return calendar.events.list({
       auth: oauth2Client,
       calendarId: 'primary',
-      timeMin: (new Date()).toISOString(),
-      maxResults: 10,
+      timeMin,
+      timeMax,
       singleEvents: true,
       orderBy: 'startTime',
       kind: 'calendar#event',
@@ -126,15 +128,16 @@ app.get('/events', (req, res) => {
   if (!req.session.auth) {
     return res.status(401).end();
   } else {
+    const timeMin = req.query.timeMin;
+    const timeMax = req.query.timeMax;
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
     oauth2Client.credentials = req.session.auth;
-    const timeMin = req.query.direction === 'back' ? moment().subtract(1, 'weeks').toISOString() : moment().add(1, 'weeks').toISOString()
 
     return calendar.events.list({
       auth: oauth2Client,
       calendarId: 'primary',
       timeMin,
-      maxResults: 10,
+      timeMax,
       singleEvents: true,
       orderBy: 'startTime',
       kind: 'calendar#event',

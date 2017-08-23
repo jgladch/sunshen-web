@@ -41,6 +41,23 @@ class EventListGroupItem extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    const extendedProperties = _.defaults(nextProps.extendedProperties, {
+      private: {
+        why: '',
+        result: '',
+        where: ''
+      }
+    });
+
+    this.setState({
+      id: nextProps.id,
+      end: nextProps.endTime,
+      start: nextProps.startTime,
+      extendedProperties
+    });  
+  }
+
   handleSubmit(e) {
     e.preventDefault();
 
@@ -173,6 +190,9 @@ class App extends Component {
       initializing: true
     };
 
+    this.timeMin = moment();
+    this.timeMax = moment().add(1, 'weeks');
+
     axios.get('/init').then((response) => {
       const state = _.extend(response.data, {initializing: false});
       return this.setState(state);
@@ -186,7 +206,15 @@ class App extends Component {
   }
 
   changeEvents(direction) {
-    return axios.get(`/events?direction=${direction}`)
+    if (direction === 'back') {
+      this.timeMin.subtract(1, 'weeks');
+      this.timeMax.subtract(1, 'weeks');
+    } else {
+      this.timeMin.add(1, 'weeks');
+      this.timeMax.add(1, 'weeks');
+    }
+
+    return axios.get(`/events?timeMin=${this.timeMin.toISOString()}&timeMax=${this.timeMax.toISOString()}`)
       .then((response) => this.setState(response.data))
       .catch(err => console.log(err));
   }
@@ -228,9 +256,9 @@ class App extends Component {
     if (this.state.authorized) {
       return (
         <div className='App'>
-          <div>
-            <Button block bsStyle="default" onClick={() => this.changeEvents('back')}>Back</Button>
-            <Button block bsStyle="default" onClick={() => this.changeEvents('next')}>Next</Button>
+          <div className="controls-row">
+            <Button className="controls-back" bsStyle="default" onClick={() => this.changeEvents('back')}>Back</Button>
+            <Button className="controls-next" bsStyle="default" onClick={() => this.changeEvents('next')}>Next</Button>
           </div>
           <div>{this.renderEvents()}</div>
         </div>
