@@ -201,7 +201,7 @@ class App extends Component {
       const state = _.extend(response.data, {initializing: false});
       const settings = JSON.parse(localStorage.calendars || '[]');
 
-      state.calendars = state.calendars.map((cal) => {
+      state.calendars = _.map(state.calendars, (cal) => {
         const found = _.find(settings, {id: cal.id});
 
         if (found) {
@@ -224,7 +224,7 @@ class App extends Component {
       const state = response.data;
       const settings = JSON.parse(localStorage.calendars || '[]');
 
-      state.calendars = state.calendars.map((cal) => {
+      state.calendars = _.map(state.calendars, (cal) => {
         const found = _.find(settings, {id: cal.id});
 
         if (found) {
