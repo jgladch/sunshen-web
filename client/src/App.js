@@ -199,10 +199,22 @@ class App extends Component {
 
     axios.get('/init').then((response) => {
       const state = _.extend(response.data, {initializing: false});
+      const settings = JSON.parse(localStorage.calendars || '[]');
+
       state.calendars = state.calendars.map((cal) => {
-        cal.show = true;
+        const found = _.find(settings, {id: cal.id});
+
+        if (found) {
+          cal.show = found.show;
+        } else {
+          cal.show = true;
+        }
+
         return cal;
       });
+
+      state.sortedEvents = sortEvents(filterEvents(state.events, state.calendars));
+
       return this.setState(state);
     }).catch(err => console.log(err));
   }
@@ -210,10 +222,22 @@ class App extends Component {
   responseGoogle(response) {
     return axios.post('/auth', response).then((response) => {
       const state = response.data;
+      const settings = JSON.parse(localStorage.calendars || '[]');
+
       state.calendars = state.calendars.map((cal) => {
-        cal.show = true;
+        const found = _.find(settings, {id: cal.id});
+
+        if (found) {
+          cal.show = found.show;
+        } else {
+          cal.show = true;
+        }
+
         return cal;
       });
+
+      state.sortedEvents = sortEvents(filterEvents(state.events, state.calendars));
+
       return this.setState(state);
     }).catch(err => console.log(err));
   }
@@ -228,7 +252,15 @@ class App extends Component {
     }
 
     return axios.get(`/events?timeMin=${this.timeMin.toISOString()}&timeMax=${this.timeMax.toISOString()}`)
-      .then((response) => this.setState(response.data))
+      .then((response) => {
+        const events = response.data.events;
+        const sortedEvents = sortEvents(filterEvents(events, this.state.calendars));
+
+        return this.setState({
+          events,
+          sortedEvents
+        });
+      })
       .catch(err => console.log(err));
   }
 
@@ -242,7 +274,6 @@ class App extends Component {
 
   updateCheckbox(e, calId) {
     let calendars = _.clone(this.state.calendars);
-    
     calendars = calendars.map((cal) => {
       if (cal.id === calId) {
         cal.show = e.target.checked;
@@ -250,8 +281,18 @@ class App extends Component {
       return cal;
     });
 
+    localStorage.calendars = JSON.stringify(calendars.map(cal => {
+      return {
+        id: cal.id,
+        show: cal.show
+      };
+    }));
+
+    const sortedEvents = sortEvents(filterEvents(this.state.events, calendars));
+
     return this.setState({
-      calendars
+      calendars,
+      sortedEvents
     });
   }
 
@@ -326,6 +367,26 @@ class App extends Component {
       );
     }
   }
+}
+
+function sortEvents (events) { // Group events by day, map into array, sort array by date (for displaying events in day lists)
+  const groupedEvents = _.groupBy(events, event => moment(event.start.dateTime || event.start.date).format('MMMM Do, YYYY'));
+  const mappedEvents = _.map(groupedEvents, (events, date) => {
+    return {
+      date,
+      events
+    };
+  });
+  const sortedEvents = _.sortBy(mappedEvents, group => group.date);
+
+  return sortedEvents;
+}
+
+function filterEvents (events, calendars) {
+  return _.filter(events, (evt) => {
+    const found = _.find(calendars, {id: evt.calId, show: true});
+    return !!found;
+  })
 }
 
 export default App;

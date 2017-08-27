@@ -49,36 +49,21 @@ app.get('/init', (req, res) => {
       auth: oauth2Client
     }, (err, response) => {
       const calendars = !!response && !!response.items ? response.items : [];
-
-      return calendar.events.list({
-        auth: oauth2Client,
-        calendarId: 'primary',
-        timeMin: (new Date()).toISOString(),
-        maxResults: 10,
-        singleEvents: true,
-        orderBy: 'startTime',
-        kind: 'calendar#event',
-        fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
-      }, (err, response) => {
-        if (err) {
-          console.log('The API returned an error: ' + err);
+      const calIds = calendars.map(cal => cal.id);
+      const events = fetchEvents(calIds, oauth2Client, null, null, (err, events) => {
+        if (!err) {
+          return res.json({
+            authorized: true,
+            events,
+            calendars
+          });
+        } else { // Error
           return res.json({
             authorized: false
           });
         }
-
-        const events = response.items;
-        const sortedEvents = sortEvents(events);
-
-        return res.json({
-          authorized: true,
-          events,
-          sortedEvents,
-          calendars
-        });
       });
     });
-
   } else {
     return res.json({
       authorized: false,
@@ -108,33 +93,19 @@ app.post('/auth', (req, res) => {
       auth: oauth2Client
     }, (err, response) => {
       const calendars = !!response && !!response.items ? response.items : [];
-
-      return calendar.events.list({
-        auth: oauth2Client,
-        calendarId: 'primary',
-        timeMin: (new Date()).toISOString(),
-        maxResults: 10,
-        singleEvents: true,
-        orderBy: 'startTime',
-        kind: 'calendar#event',
-        fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
-      }, (err, response) => {
-        if (err) {
-          console.log('The API returned an error: ' + err);
+      const calIds = calendars.map(cal => cal.id);
+      const events = fetchEvents(calIds, oauth2Client, null, null, (err, events) => {
+        if (!err) {
+          return res.json({
+            authorized: true,
+            events,
+            calendars
+          });
+        } else { // Error
           return res.json({
             authorized: false
           });
         }
-
-        const events = response.items;
-        const sortedEvents = sortEvents(events);
-
-        return res.json({
-          authorized: true,
-          events,
-          sortedEvents,
-          calendars
-        });
       });
     });
   });
@@ -149,28 +120,18 @@ app.get('/events', (req, res) => {
     const oauth2Client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CLIENT_REDIRECT_URI);
     oauth2Client.credentials = req.session.auth;
 
-    return calendar.events.list({
-      auth: oauth2Client,
-      calendarId: 'primary',
-      timeMin,
-      timeMax,
-      singleEvents: true,
-      orderBy: 'startTime',
-      kind: 'calendar#event',
-      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    return calendar.calendarList.list({
+      auth: oauth2Client
     }, (err, response) => {
-      console.log('response: ', response);
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return;
-      }
-
-      const events = response.items;
-      const sortedEvents = sortEvents(events);
-
-      return res.json({
-        events,
-        sortedEvents
+      const calendars = !!response && !!response.items ? response.items : [];
+      const calIds = calendars.map(cal => cal.id);
+      const events = fetchEvents(calIds, oauth2Client, timeMin, timeMax, (err, events) => {
+        if (!err) {
+          return res.json({
+            events,
+            calendars
+          });
+        }
       });
     });
   }
@@ -210,6 +171,47 @@ app.put('/event', (req, res) => {
 app.listen(app.get('port'), () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });
+
+function fetchEvents (calIds, oauth2Client, timeMin, timeMax, callback) {
+  if (!timeMin) timeMin = moment().toISOString();
+  if (!timeMax) timeMax = moment().add(1, 'weeks').toISOString();
+
+  let events = [];
+
+  const subroutine = (ids) => {
+    if (ids.length === 0) {
+      return callback(null, events);
+    }
+
+    const id = ids.shift();
+
+    return calendar.events.list({
+      auth: oauth2Client,
+      calendarId: id,
+      timeMin,
+      timeMax,
+      singleEvents: true,
+      orderBy: 'startTime',
+      kind: 'calendar#event',
+      fields: 'items(etag, id, status, htmlLink, created, updated, creator, organizer, recurringEventId, recurrence, attendees, summary, start, end, extendedProperties), summary'
+    }, (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+      }
+
+      if (response && response.items) {
+        response.items.forEach(evt => {
+          evt.calId = id;
+          events.push(evt);
+        });
+      }
+
+      return subroutine(ids);
+    });
+  };
+
+  return subroutine(calIds);
+};
 
 function sortEvents (events) { // Group events by day, map into array, sort array by date (for displaying events in day lists)
   const groupedEvents = _.groupBy(events, event => moment(event.start.dateTime || event.start.date).format('MMMM Do, YYYY'));
